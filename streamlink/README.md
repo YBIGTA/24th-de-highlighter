@@ -1,3 +1,11 @@
+## Run
+```bash
+python main.py <Livestream URL> <Buffer size> <Time duration>
+ffmpeg -i vid.ts -c copy <Video filename>
+```
+- 버퍼 크기: 131072 (128KB)
+- 시간 제한: 무제한
+
 ## 버퍼 크기
 
 버퍼 크기 별 (총 데이터 크기) / (버퍼 크기 * 읽은 횟수) 값
