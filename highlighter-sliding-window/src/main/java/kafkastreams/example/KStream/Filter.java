@@ -12,7 +12,7 @@ import java.util.Properties;
 
 public class Filter {
 
-    private final static String BOOTSTRAP_SERVERS = "43.202.65.95:9092";  /* change ip */
+    private final static String BOOTSTRAP_SERVERS = "43.201.57.179:9092";  /* change ip */
     private final static String APPLICATION_NAME = "word-filter-application";
     private final static String STREAM_SOURCE = "stream_filter";
     private final static String STREAM_SINK = "stream_filter_sink";

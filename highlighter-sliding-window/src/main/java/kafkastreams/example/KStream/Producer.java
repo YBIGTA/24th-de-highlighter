@@ -16,7 +16,7 @@ import java.util.StringTokenizer;
 
 public class Producer {
     private final static Logger log = LoggerFactory.getLogger(Consumer.class);
-    private final static String BOOTSTRAP_SERVERS = "43.202.65.95:9092";  /* change ip */
+    private final static String BOOTSTRAP_SERVERS = "43.201.57.179:9092";  /* change ip */
     private final static String TOPIC_NAME = "stream_filter";
     static BufferedReader br;
     static StringTokenizer str;
@@ -68,8 +68,8 @@ public class Producer {
         System.out.println("BOOTSTRAP_SERVERS = " + BOOTSTRAP_SERVERS);
         Properties properties = new Properties();
         properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
         return new KafkaProducer<>(properties);
     }
