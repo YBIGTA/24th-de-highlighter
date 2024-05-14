@@ -8,4 +8,4 @@ services:
     volumes:
       - ./chat:/app/chat
     environment:
-       - YOUTUBE_URL="https://www.youtube.com/watch?v=FJfwehhzIhw"
+       - YOUTUBE_URL="https://www.youtube.com/watch?v=ufw3mBGqcQQ"
