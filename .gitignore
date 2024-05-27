@@ -1,2 +1,5 @@
 youtube-live/.env
 youtube-live/chat/*
+youtube-live/__pychcache__/*
+.idea/*
+.vscode/*

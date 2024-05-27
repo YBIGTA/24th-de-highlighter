@@ -3,3 +3,6 @@ pytchat
 pafy
 pandas
 python-dotenv
+fastapi
+kafka-python
+uvicorn
