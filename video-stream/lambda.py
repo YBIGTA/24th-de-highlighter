@@ -5,6 +5,7 @@ import subprocess
 import time
 import base64
 import shlex
+from datetime import datetime
 
 
 def lambda_handler(event, context):
@@ -16,6 +17,16 @@ def lambda_handler(event, context):
     
     bucket_name = "de-highlighter"
     file_name = str(uuid.uuid4())
+
+    # Parse timestamp from query parameters
+    offset = 60 * 60 * 9
+    start_str = event["queryStringParameters"]["start"]
+    start_time = time.mktime(
+        datetime.strptime(start_str, "%Y-%m-%d %H:%M:%S").timetuple()) - offset
+    
+    end_str = event["queryStringParameters"]["end"]
+    end_time = time.mktime(
+        datetime.strptime(end_str, "%Y-%m-%d %H:%M:%S").timetuple()) - offset
     
     with open(f"/tmp/vid.ts", "wb") as video_file:
         while True:
@@ -45,9 +56,10 @@ def lambda_handler(event, context):
                     ReceiptHandle=receipt_handle
                 )
     
-                # TODO: Replace time.time() to given value from Kafka
-                # trigger_time = ...
-                if time.time() - float(sent_timestamp) / 1000 > 30:
+                # if time.time() - float(sent_timestamp) / 1000 > 30:
+                if float(sent_timestamp) / 1000 > end_time:
+                    break
+                elif float(sent_timestamp) / 1000 < start_time:
                     pass
                 else:
                     body = base64.b64decode(message["Body"].encode())
@@ -63,11 +75,17 @@ def lambda_handler(event, context):
         s3.upload_file(Filename=f"/tmp/{file_name}.mp4", Bucket=bucket_name, Key=f"{file_name}.mp4")
         return {
             'statusCode': 200,
+            'sent': json.dumps(float(sent_timestamp) / 1000),
+            'start': json.dumps(start_time),
+            'end': json.dumps(end_time),
             'body': json.dumps("Upload success")
         }
     except Exception as e:
         return {
             'statusCode': 400,
+            'sent': json.dumps(float(sent_timestamp) / 1000),
+            'start': json.dumps(start_time),
+            'end': json.dumps(end_time),
             'body': json.dumps(f"Fail: {e}")
         }
     
