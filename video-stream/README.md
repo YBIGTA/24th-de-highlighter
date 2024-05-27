@@ -3,8 +3,9 @@
 
 - [x] Streamlink on EC2
 - [x] EC2에서 SQS로 메시지 전송하기
-- [ ] Lambda에서 컨슈머 함수 구현 (채팅 카프카 파트 완성되면 트리거 넣어주기)
-- [ ] S3에 영상 저장
+- [x] Lambda에서 컨슈머 함수 구현
+- [ ] Lambda 트리거 설정
+- [x] S3에 영상 저장
 
 ## Run
 ```bash
