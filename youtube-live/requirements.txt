@@ -6,3 +6,5 @@ python-dotenv
 fastapi
 kafka-python
 uvicorn
+pymongo
+DateTime
