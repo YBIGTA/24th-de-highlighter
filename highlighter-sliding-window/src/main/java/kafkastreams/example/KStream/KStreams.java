@@ -16,11 +16,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 public class KStreams {
-    private static final String BOOTSTRAP_SERVERS = "3.35.19.251:9092"; // IP 바꾸세요
+    private static final String BOOTSTRAP_SERVERS = "43.203.141.74:9092"; // IP 바꾸세요
     private static final String APPLICATION_NAME = "timestamp-count-application";
-    private static final String STREAM_SOURCE = "bab";  // Source 바꾸세요
-    private static final String STREAM_SINK = "bab_sink";   // Sink 바꾸세요
-    private static final long THRESHOLD = 10;  // Example threshold
+    private static final String STREAM_SOURCE = "stream_filter";  // Source 바꾸세요
+    private static final String STREAM_SINK = "stream_filter_sink";   // Sink 바꾸세요
+    private static final long THRESHOLD = 3;  // Example threshold
 
     public static void main(String[] args) {
         Properties properties = new Properties();
@@ -47,16 +47,23 @@ public class KStreams {
                     }
                 });
 
+        // Log after converting to epoch
+        timestampsToEpoch.peek((key, value) -> System.out.println("     [EPOCH VALUE]: " + value));
+
         KTable<Windowed<Long>, Long> timestampCounts = timestampsToEpoch
                 .filter((key, value) -> value != null)
                 .groupBy((key, value) -> value, Grouped.with(Serdes.Long(), Serdes.Long()))
-                .windowedBy(TimeWindows.of(Duration.ofSeconds(30)).advanceBy(Duration.ofSeconds(1)))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(10)).advanceBy(Duration.ofSeconds(1)))
                 .count();
+
+        // Log the windowed counts
+        timestampCounts.toStream().peek((key, value) -> System.out.println("     [WINDOW COUNT]: - Key: " + key + ", Count: " + value));
 
         KStream<String, String> outputStream = timestampCounts
                 .toStream()
                 .transform(() -> new ThresholdExceedTransformer(), Named.as("ThresholdExceed"));
 
+        outputStream.peek((key, value) -> System.out.println("[SEND] Sending to Kafka: Key = " + key + ", Value = " + value));
         outputStream.to(STREAM_SINK, Produced.with(Serdes.String(), Serdes.String()));
 
         KafkaStreams streams = new KafkaStreams(builder.build(), properties);
