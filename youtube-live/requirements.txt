@@ -1,0 +1,5 @@
+youtube-dl
+pytchat
+pafy
+pandas
+python-dotenv
