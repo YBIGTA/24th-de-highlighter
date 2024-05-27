@@ -5,20 +5,22 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.processor.ProcessorContext;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.ZoneId;
-import org.apache.kafka.streams.KeyValue;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 public class KStreams {
-
-    private final static String BOOTSTRAP_SERVERS = "43.203.141.74:9092";
-    private final static String APPLICATION_NAME = "timestamp-count-application";
-    private final static String STREAM_SOURCE = "stream_filter";
-    private final static String STREAM_SINK = "stream_filter_sink";
+    private static final String BOOTSTRAP_SERVERS = "3.35.19.251:9092"; // IP 바꾸세요
+    private static final String APPLICATION_NAME = "timestamp-count-application";
+    private static final String STREAM_SOURCE = "bab";  // Source 바꾸세요
+    private static final String STREAM_SINK = "bab_sink";   // Sink 바꾸세요
+    private static final long THRESHOLD = 10;  // Example threshold
 
     public static void main(String[] args) {
         Properties properties = new Properties();
@@ -29,7 +31,6 @@ public class KStreams {
 
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, String> streamLog = builder.stream(STREAM_SOURCE);
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         KStream<String, Long> timestampsToEpoch = streamLog
@@ -46,35 +47,55 @@ public class KStreams {
                     }
                 });
 
-        // Log after converting to epoch
-        timestampsToEpoch.peek((key, value) -> System.out.println("     [EPOCH VALUE]: " + value));
-
-        // Define a sliding window of 1 minute with a hop of 1 second
         KTable<Windowed<Long>, Long> timestampCounts = timestampsToEpoch
                 .filter((key, value) -> value != null)
                 .groupBy((key, value) -> value, Grouped.with(Serdes.Long(), Serdes.Long()))
-                .windowedBy(TimeWindows.of(Duration.ofSeconds(10)).advanceBy(Duration.ofSeconds(1)))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(30)).advanceBy(Duration.ofSeconds(1)))
                 .count();
 
-        // Detect spikes where message count suddenly rises and output to the sink topic
         KStream<String, String> outputStream = timestampCounts
                 .toStream()
-                .filter((key, value) -> value > 5)  // Example threshold
-                .map((key, value) -> {
-                    String startTime = Instant.ofEpochMilli(key.window().start())
-                            .atZone(ZoneId.systemDefault())
-                            .format(formatter);
-                    String endTime = Instant.ofEpochMilli(key.window().end())
-                            .atZone(ZoneId.systemDefault())
-                            .format(formatter);
-                    return KeyValue.pair(startTime, "From " + startTime + " to " + endTime + ", Count: " + value);
-                });
+                .transform(() -> new ThresholdExceedTransformer(), Named.as("ThresholdExceed"));
 
-        outputStream.peek((key, value) -> System.out.println("[SEND] Sending to Kafka: Key = " + key + ", Value = " + value));
         outputStream.to(STREAM_SINK, Produced.with(Serdes.String(), Serdes.String()));
 
         KafkaStreams streams = new KafkaStreams(builder.build(), properties);
         streams.start();
         Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
+    }
+
+    static class ThresholdExceedTransformer implements Transformer<Windowed<Long>, Long, KeyValue<String, String>> {
+        private boolean thresholdExceeded = false;
+        private long startTime = 0;
+
+        @Override
+        public void init(ProcessorContext context) {
+        }
+
+        @Override
+        public KeyValue<String, String> transform(Windowed<Long> key, Long value) {
+            if (value > THRESHOLD) {
+                if (!thresholdExceeded) {
+                    thresholdExceeded = true;
+                    startTime = key.window().start();
+                }
+            } else if (thresholdExceeded) {
+                thresholdExceeded = false;
+                long endTime = key.window().end();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                // 시작 시간과 종료 시간을 사용자 친화적인 형식으로 포맷팅합니다.
+                String start = Instant.ofEpochMilli(startTime).atZone(ZoneId.systemDefault()).format(formatter);
+                String end = Instant.ofEpochMilli(endTime).atZone(ZoneId.systemDefault()).format(formatter);
+
+                // 결과를 KeyValue 객체로 반환합니다.
+                return new KeyValue<>(start, "Threshold exceeded from " + start + " to " + end);
+            }
+            return null;
+        }
+
+        @Override
+        public void close() {
+        }
     }
 }
