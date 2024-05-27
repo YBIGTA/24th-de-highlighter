@@ -16,7 +16,7 @@ import java.util.StringTokenizer;
 
 public class Producer {
     private final static Logger log = LoggerFactory.getLogger(Consumer.class);
-    private final static String BOOTSTRAP_SERVERS = "43.201.57.179:9092";  /* change ip */
+    private final static String BOOTSTRAP_SERVERS = "43.203.141.74:9092";  /* change ip */
     private final static String TOPIC_NAME = "stream_filter";
     static BufferedReader br;
     static StringTokenizer str;
@@ -48,9 +48,11 @@ public class Producer {
                 str = new StringTokenizer(br.readLine());
                 key = str.nextToken();
                 value = str.nextToken();
+                log.info("K, V: " + key + ", " + value);
             } else {
                 key = null;
                 value = br.readLine();
+                log.info("V: " + value);
             }
             ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC_NAME, key, value);
 

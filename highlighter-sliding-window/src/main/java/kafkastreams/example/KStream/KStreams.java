@@ -7,18 +7,15 @@ import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.StreamsConfig;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.Properties;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.ZoneId;
 import org.apache.kafka.streams.KeyValue;
-
+import java.util.Properties;
 
 public class KStreams {
 
-    private final static String BOOTSTRAP_SERVERS = "43.201.57.179:9092";  /* change ip */
+    private final static String BOOTSTRAP_SERVERS = "43.203.141.74:9092";
     private final static String APPLICATION_NAME = "timestamp-count-application";
     private final static String STREAM_SOURCE = "stream_filter";
     private final static String STREAM_SINK = "stream_filter_sink";
@@ -49,23 +46,31 @@ public class KStreams {
                     }
                 });
 
+        // Log after converting to epoch
+        timestampsToEpoch.peek((key, value) -> System.out.println("     [EPOCH VALUE]: " + value));
+
+        // Define a sliding window of 1 minute with a hop of 1 second
         KTable<Windowed<Long>, Long> timestampCounts = timestampsToEpoch
                 .filter((key, value) -> value != null)
                 .groupBy((key, value) -> value, Grouped.with(Serdes.Long(), Serdes.Long()))
-                .windowedBy(TimeWindows.of(Duration.ofMinutes(5)))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(10)).advanceBy(Duration.ofSeconds(1)))
                 .count();
 
+        // Detect spikes where message count suddenly rises and output to the sink topic
         KStream<String, String> outputStream = timestampCounts
                 .toStream()
+                .filter((key, value) -> value > 5)  // Example threshold
                 .map((key, value) -> {
-                    // Convert the millisecond timestamp back to a date string
-                    String timestampStr = Instant.ofEpochMilli(key.window().start())
+                    String startTime = Instant.ofEpochMilli(key.window().start())
                             .atZone(ZoneId.systemDefault())
-                            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                    return KeyValue.pair(timestampStr, timestampStr + " , " + value);
+                            .format(formatter);
+                    String endTime = Instant.ofEpochMilli(key.window().end())
+                            .atZone(ZoneId.systemDefault())
+                            .format(formatter);
+                    return KeyValue.pair(startTime, "From " + startTime + " to " + endTime + ", Count: " + value);
                 });
 
-        outputStream.peek((key, value) -> System.out.println("Sending to Kafka: Key = " + key + ", Value = " + value));
+        outputStream.peek((key, value) -> System.out.println("[SEND] Sending to Kafka: Key = " + key + ", Value = " + value));
         outputStream.to(STREAM_SINK, Produced.with(Serdes.String(), Serdes.String()));
 
         KafkaStreams streams = new KafkaStreams(builder.build(), properties);
@@ -73,4 +78,3 @@ public class KStreams {
         Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
     }
 }
-

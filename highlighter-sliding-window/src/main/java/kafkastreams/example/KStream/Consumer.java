@@ -15,7 +15,7 @@ import java.util.Properties;
 public class Consumer {
 
     private final static Logger log = LoggerFactory.getLogger(Consumer.class);
-    private final static String BOOTSTRAP_SERVERS = "43.201.57.179:9092";  /* change ip */
+    private final static String BOOTSTRAP_SERVERS = "43.203.141.74:9092";  /* change ip */
     private final static String GROUP_ID = "kstream-application";  /* this can be anything you want */
     private final static String TOPIC_NAME = "stream_filter_sink";
 
