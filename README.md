@@ -1,7 +1,6 @@
 # Highlighter: Real-time Video Highlighting
 24대 DE팀 프로젝트 - 하이라이터: 실시간 영상 하이라이팅
 
-
 ## 1. 프로젝트 소개
 ### 1.1 프로젝트 명
 하이라이터: 실시간 영상 하이라이팅
@@ -23,16 +22,31 @@
 ### 2.1 프로젝트 구조
 하이라이터는 다음과 같은 구조로 이루어져 있습니다.
 - Kafka Streams: 실시간 채팅 트래픽을 계산하여 트래픽이 폭증할 시 이벤트를 발생시킵니다.
-- Kassandra: 하이라이트 영상에 대한 채팅 내용 데이터를 저장합니다. 제목 생성에 쓰이는 키워드는 해당 DB에서 추출합니다.
+- MongoDB: 하이라이트 영상에 대한 채팅 내용 데이터를 저장합니다. 제목 생성에 쓰이는 키워드는 해당 DB에서 추출합니다.
+- Video Downloader/Processor: 사용자가 입력한 영상을 다운로드하고, 하이라이트 영상을 생성합니다.
+
+## 3. 깃허브 컴포넌트 소개
+### 3.1 highlighter-sliding-window
+Kafka Streams를 이용하여 실시간 채팅 트래픽을 계산하는 컴포넌트입니다. 자바 프로젝트로 구성되어 있으며, Kafka Producer, Kafka Consumer, Kafka Streams Application으로 구성되어 있습니다.
+
+### 3.2 video-stream
+사용자가 입력한 영상을 다운로드하고, 하이라이트 영상을 생성하는 컴포넌트입니다. 파이썬 프로젝트로 구성되어 있으며, AWS SQS를 이용하여 영상을 bytestream으로 다운로드하고, FFmpeg를 이용하여 영상을 처리합니다.
+
+### 3.3 videoUpload
+하이라이트 영상을 유튜브에 자동으로 업로드하는 컴포넌트입니다. 파이썬으로 프로젝트로 구성되어 있으며, Youtube Token을 이용하여 유튜브에 영상을 업로드합니다.
+
+### 3.4 youtube-live
+유튜브 API를 이용하여 실시간 채팅을 가져오는 컴포넌트입니다. 또한, 해당 타임스템프들을 각각 json파일으로 변환하여 몽고DB로 전송하며, 카프카 프로듀서 API를 활용하여 실질적인 프로듀서 역할을 수행합니다.
+
 
 ## 3. 팀원 소개
 이름 | 역할                  
 --- | --------------------
 성현준 | 팀장, KStreams, AWS
-이우흥 | KStreams
+이우흥 | Title Generation
 서건하 | KStreams
-오재현 | Kassandra
 유지민 | Video Downloader/Processor
-류지현 | Title Generation
-임채림 | Chat log Retrieval (Docker)
-조윤영 | Chat log Retrieval (Youtube API)
+오재현 | MongoDB
+류지현 | Title Generation, Upload automation
+임채림 | Chatlog Retrieval (Docker), Kafka Producer
+조윤영 | Chatlog Retrieval (Youtube API)
