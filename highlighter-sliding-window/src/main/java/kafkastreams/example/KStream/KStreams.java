@@ -15,12 +15,15 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class KStreams {
-    private static final String BOOTSTRAP_SERVERS = "3.35.19.251:9092"; // IP 바꾸세요
+    private static final String BOOTSTRAP_SERVERS = "43.203.141.74:9092"; // IP 바꾸세요
     private static final String APPLICATION_NAME = "timestamp-count-application";
-    private static final String STREAM_SOURCE = "ga";  // Source 바꾸세요
-    private static final String STREAM_SINK = "ga_sink";   // Sink 바꾸세요
-    private static final long THRESHOLD = 2;  // Example threshold
+    private static final String STREAM_SOURCE = "stream_filter";  // Source 바꾸세요
+    private static final String STREAM_SINK = "stream_filter_sink";   // Sink 바꾸세요
+    private static final long THRESHOLD = 3;  // Example threshold
 
     public static void main(String[] args) {
         Properties properties = new Properties();
@@ -47,16 +50,23 @@ public class KStreams {
                     }
                 });
 
+        // Log after converting to epoch
+        timestampsToEpoch.peek((key, value) -> System.out.println("     [EPOCH VALUE]: " + value));
+
         KTable<Windowed<Long>, Long> timestampCounts = timestampsToEpoch
                 .filter((key, value) -> value != null)
                 .groupBy((key, value) -> value, Grouped.with(Serdes.Long(), Serdes.Long()))
-                .windowedBy(TimeWindows.of(Duration.ofSeconds(10)).advanceBy(Duration.ofSeconds(1)))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(20)).advanceBy(Duration.ofSeconds(1)))
                 .count();
+
+        // Log the windowed counts
+//        timestampCounts.toStream().peek((key, value) -> System.out.println("     [WINDOW COUNT]: - Key: " + key + ", Count: " + value));
 
         KStream<String, String> outputStream = timestampCounts
                 .toStream()
                 .transform(() -> new ThresholdExceedTransformer(), Named.as("ThresholdExceed"));
 
+        outputStream.peek((key, value) -> System.out.println("[SEND] Sending to Kafka: Key = " + key + ", Value = " + value));
         outputStream.to(STREAM_SINK, Produced.with(Serdes.String(), Serdes.String()));
 
         KafkaStreams streams = new KafkaStreams(builder.build(), properties);
@@ -67,6 +77,7 @@ public class KStreams {
     static class ThresholdExceedTransformer implements Transformer<Windowed<Long>, Long, KeyValue<String, String>> {
         private boolean thresholdExceeded = false;
         private long startTime = 0;
+        private final Logger log = LoggerFactory.getLogger(ThresholdExceedTransformer.class);
 
         @Override
         public void init(ProcessorContext context) {
@@ -77,6 +88,11 @@ public class KStreams {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             long durationThreshold = Duration.ofSeconds(30).toMillis();  // 30초를 밀리초 단위로 변환
             long oneMinuteMillis = Duration.ofMinutes(1).toMillis();  // 1분을 밀리초 단위로 변환
+
+            // 윈도우의 시작 시간과 종료 시간을 문자열로 변환
+            String windowStart = Instant.ofEpochMilli(key.window().start()).atZone(ZoneId.systemDefault()).format(formatter);
+            String windowEnd = Instant.ofEpochMilli(key.window().end()).atZone(ZoneId.systemDefault()).format(formatter);
+            log.info("     [WINDOW]: " + windowStart + " to " + windowEnd + ", has count: " + value);
 
             if (value > THRESHOLD) {
                 if (!thresholdExceeded) {
@@ -104,7 +120,7 @@ public class KStreams {
                 String start = Instant.ofEpochMilli(startTime).atZone(ZoneId.systemDefault()).format(formatter);
                 String end = Instant.ofEpochMilli(endTime).atZone(ZoneId.systemDefault()).format(formatter);
 
-                return new KeyValue<>(start, "Threshold exceeded from " + start + " to " + end);
+                return new KeyValue<>(start, start + " to " + end);
             }
             return null;
         }
