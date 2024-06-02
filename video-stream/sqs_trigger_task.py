@@ -1,3 +1,6 @@
+"""
+Save video to S3, triggered by SQS.
+"""
 import json
 import uuid
 import boto3
@@ -5,6 +8,7 @@ import subprocess
 import time
 import base64
 import shlex
+from datetime import datetime
 
 
 def lambda_handler(event, context):
@@ -17,6 +21,11 @@ def lambda_handler(event, context):
     bucket_name = "de-highlighter"
     file_name = str(uuid.uuid4())
     
+    msg = event["Records"][0]
+    body = json.loads(msg["body"])
+    start_time = body["start"]
+    end_time = body["end"]
+        
     with open(f"/tmp/vid.ts", "wb") as video_file:
         while True:
             response = sqs.receive_message(
@@ -45,9 +54,9 @@ def lambda_handler(event, context):
                     ReceiptHandle=receipt_handle
                 )
     
-                # TODO: Replace time.time() to given value from Kafka
-                # trigger_time = ...
-                if time.time() - float(sent_timestamp) / 1000 > 30:
+                if float(sent_timestamp) / 1000 > end_time:
+                    break
+                elif float(sent_timestamp) / 1000 < start_time:
                     pass
                 else:
                     body = base64.b64decode(message["Body"].encode())
@@ -66,10 +75,8 @@ def lambda_handler(event, context):
             'body': json.dumps("Upload success")
         }
     except Exception as e:
+        s3.put_object(Body=f"Error: {e}", Bucket=bucket_name, Key=f"error-{file_name}.txt")
         return {
-            'statusCode': 400,
-            'body': json.dumps(f"Fail: {e}")
+            'statusCode': 400
         }
-    
-
-    
+        

@@ -1,13 +1,12 @@
+"""
+Read stream, send from EC2 to SQS.
+"""
 import streamlink, datetime, sys, time, boto3
 import base64
 
 URL = sys.argv[1]
 BUF_SIZE = int(sys.argv[2])
 TIME = int(sys.argv[3])
-
-# URL = "https://www.youtube.com/watch?v=Z2MR73ELLkE"
-# BUF_SIZE = 4096
-# TIME = 300
 
 streams = streamlink.streams(URL)
 print("Streams found: ", *streams.keys())
@@ -20,9 +19,8 @@ total_data = 0
 
 # AWS SQS
 sqs = boto3.client('sqs')
-queue_url='https://sqs.ap-northeast-2.amazonaws.com/710063216674/highlighter.fifo'
+queue_url=''
 
-# with open("vid.ts", "wb") as video_file:
 data_id = 0
 while time.time() - now < TIME:
     data = fd.read(BUF_SIZE)
