@@ -20,6 +20,16 @@ def lambda_handler(event, context):
     
     bucket_name = "de-highlighter"
     file_name = str(uuid.uuid4())
+
+    # Parse timestamp from query parameters
+    offset = 60 * 60 * 9
+    start_str = event["queryStringParameters"]["start"]
+    start_time = time.mktime(
+        datetime.strptime(start_str, "%Y-%m-%d %H:%M:%S").timetuple()) - offset
+    
+    end_str = event["queryStringParameters"]["end"]
+    end_time = time.mktime(
+        datetime.strptime(end_str, "%Y-%m-%d %H:%M:%S").timetuple()) - offset
     
     msg = event["Records"][0]
     body = json.loads(msg["body"])
@@ -54,6 +64,7 @@ def lambda_handler(event, context):
                     ReceiptHandle=receipt_handle
                 )
     
+                # if time.time() - float(sent_timestamp) / 1000 > 30:
                 if float(sent_timestamp) / 1000 > end_time:
                     break
                 elif float(sent_timestamp) / 1000 < start_time:
@@ -72,11 +83,18 @@ def lambda_handler(event, context):
         s3.upload_file(Filename=f"/tmp/{file_name}.mp4", Bucket=bucket_name, Key=f"{file_name}.mp4")
         return {
             'statusCode': 200,
+            'sent': json.dumps(float(sent_timestamp) / 1000),
+            'start': json.dumps(start_time),
+            'end': json.dumps(end_time),
             'body': json.dumps("Upload success")
         }
     except Exception as e:
         s3.put_object(Body=f"Error: {e}", Bucket=bucket_name, Key=f"error-{file_name}.txt")
         return {
-            'statusCode': 400
+            'statusCode': 400,
+            'sent': json.dumps(float(sent_timestamp) / 1000),
+            'start': json.dumps(start_time),
+            'end': json.dumps(end_time),
+            'body': json.dumps(f"Fail: {e}")
         }
         
