@@ -14,8 +14,9 @@ logging.basicConfig(
 )
 
 # Kafka config
+broker_public_ip = None
 conf = {
-    'bootstrap.servers': "127.0.0.1:9092",
+    'bootstrap.servers': f"{broker_public_ip}:9092",
     'security.protocol': 'PLAINTEXT'
 }
 

@@ -1,36 +1,70 @@
-import streamlink, datetime, sys, time, boto3
-import base64
+"""
+Read stream, send from EC2 to SQS.
+"""
+import argparse
+import logging
+import sys
+import time
 
-URL = sys.argv[1]
-BUF_SIZE = int(sys.argv[2])
-TIME = int(sys.argv[3])
+import streamlink
+from confluent_kafka import Producer
 
-# URL = "https://www.youtube.com/watch?v=Z2MR73ELLkE"
-# BUF_SIZE = 4096
-# TIME = 300
 
-streams = streamlink.streams(URL)
-print("Streams found: ", *streams.keys())
+# Logging config
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    encoding='utf-8',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y/%m/%d %H:%M:%S'
+)
 
-fd = streams['best'].open()
+# Kafka config
+broker_public_ip = None
+conf = {
+    'bootstrap.servers': f'{broker_public_ip}:9092',
+    'security.protocol': 'PLAINTEXT'
+}
 
-now = time.time()
-lines = 0
-total_data = 0
+producer = Producer(**conf)
 
-# AWS SQS
-sqs = boto3.client('sqs')
-queue_url='https://sqs.ap-northeast-2.amazonaws.com/710063216674/highlighter.fifo'
+def delivery_report(err, msg):
+    if err is not None:
+        logger.warning(f'Message delivery failed: {err}')
+    else:
+        logger.info(f'Message delivered to {msg.topic()} [{msg.partition()}]')
 
-# with open("vid.ts", "wb") as video_file:
-data_id = 0
-while time.time() - now < TIME:
-    data = fd.read(BUF_SIZE)
-    data_id += 1
-    res = sqs.send_message(
-            QueueUrl=queue_url,
-            MessageBody=base64.b64encode(data).decode(),
-            MessageGroupId="1",
-            MessageDeduplicationId=str(data_id)
+
+def get_stream(url: str, duration: int, buf_size: int):
+    streams = streamlink.streams(url)
+    logger.info(f'Streams found: {streams.keys()}')
+    fd = streams['best'].open()
+
+    now = time.time()
+    while time.time() - now < duration:
+        data = fd.read(buf_size)
+        producer.poll(0)
+        producer.produce(
+            'mytopic',
+            data,
+            callback=delivery_report
+        )
+    producer.flush()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Streamlink Kafka Producer')
+    parser.add_argument('-u', '--url', type=str, required=True, help='URL link to YouTube live')
+    parser.add_argument('-t', '--time', type=int, required=True, help='Time duration to capture streams')
+    parser.add_argument('-b', '--bufsize', type=int, required=True, help='Buffer size')
+    args = parser.parse_args()
+
+    url = args.url
+    duration = args.time
+    bufsize = args.bufsize
+
+    get_stream(
+        url=url,
+        duration=duration,
+        buf_size=bufsize
     )
-    print(data_id, res['MessageId'], data[:8])
