@@ -1,0 +1,10 @@
+youtube-dl
+pytchat
+pafy
+pandas
+python-dotenv
+fastapi
+kafka-python
+uvicorn
+pymongo
+DateTime

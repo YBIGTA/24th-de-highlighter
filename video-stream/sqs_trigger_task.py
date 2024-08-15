@@ -1,3 +1,6 @@
+"""
+Save video to S3, triggered by SQS.
+"""
 import json
 import uuid
 import boto3
@@ -28,6 +31,11 @@ def lambda_handler(event, context):
     end_time = time.mktime(
         datetime.strptime(end_str, "%Y-%m-%d %H:%M:%S").timetuple()) - offset
     
+    msg = event["Records"][0]
+    body = json.loads(msg["body"])
+    start_time = body["start"]
+    end_time = body["end"]
+        
     with open(f"/tmp/vid.ts", "wb") as video_file:
         while True:
             response = sqs.receive_message(
@@ -81,6 +89,7 @@ def lambda_handler(event, context):
             'body': json.dumps("Upload success")
         }
     except Exception as e:
+        s3.put_object(Body=f"Error: {e}", Bucket=bucket_name, Key=f"error-{file_name}.txt")
         return {
             'statusCode': 400,
             'sent': json.dumps(float(sent_timestamp) / 1000),
@@ -88,6 +97,4 @@ def lambda_handler(event, context):
             'end': json.dumps(end_time),
             'body': json.dumps(f"Fail: {e}")
         }
-    
-
-    
+        
