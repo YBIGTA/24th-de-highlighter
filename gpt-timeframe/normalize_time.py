@@ -15,8 +15,8 @@ def normalize_time_format(time_str):
         return f"00:{minutes.zfill(2)}:{seconds.zfill(2)}"
     elif len(parts) == 3:
         # Check if it's mm:ss:00 or hh:mm:ss
-        if len(parts[0]) == 1:
-            # Format is mm:ss:00, convert to hh:mm:ss
+        if parts[2] == '00' and int(parts[0]) >= 24:
+            # Format is mm:ss:00 for times >= 24 minutes, convert to hh:mm:ss
             minutes, seconds, _ = parts
             return f"00:{minutes.zfill(2)}:{seconds.zfill(2)}"
         else:
