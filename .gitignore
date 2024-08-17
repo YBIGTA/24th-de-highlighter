@@ -4,6 +4,11 @@ add-java-docker
 youtube-live/__pychcache__/*
 .idea/*
 .vscode/*
+
+# Terraform
+.terraform*
+terraform.tfstate
+terraform.tfstate.backup
 =======
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
