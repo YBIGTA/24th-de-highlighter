@@ -3,7 +3,6 @@ Read stream, send from EC2 to SQS.
 """
 import argparse
 import logging
-import sys
 import time
 
 import streamlink
@@ -43,12 +42,12 @@ def get_stream(url: str, duration: int, buf_size: int):
     now = time.time()
     while time.time() - now < duration:
         data = fd.read(buf_size)
-        producer.poll(0)
         producer.produce(
             'mytopic',
             data,
             callback=delivery_report
         )
+        producer.poll(0)
     producer.flush()
 
 
