@@ -3,7 +3,6 @@ Read stream, send from EC2 to SQS.
 """
 import argparse
 import logging
-import sys
 import time
 
 import streamlink
