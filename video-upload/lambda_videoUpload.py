@@ -4,6 +4,7 @@ import time
 import boto3
 import google.auth
 import google.auth.transport.requests
+import urllib.parse
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
@@ -115,11 +116,24 @@ def lambda_handler(event, context):
     # S3 버킷 이름과 객체 키 추출
     try:
         s3_bucket = event['Records'][0]['s3']['bucket']['name']
-        s3_key = event['Records'][0]['s3']['object']['key']
+        s3_key = urllib.parse.unquote(event['Records'][0]['s3']['object']['key'])
     except KeyError as e:
         raise ValueError(f"Failed to extract S3 bucket or key: {str(e)}")
-    
-     # S3 객체 키에서 파일 이름 추출
+
+    # Verify the object exists
+    s3 = boto3.client('s3')
+    try:
+        s3.head_object(Bucket=s3_bucket, Key=s3_key)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            raise FileNotFoundError(f"The object {s3_key} does not exist in the bucket {s3_bucket}")
+        else:
+            raise
+
+    with NamedTemporaryFile(delete=False) as temp_file:
+        s3.download_fileobj(s3_bucket, s3_key, temp_file)
+        temp_file_path = temp_file.name
+
     file_name = os.path.basename(s3_key)
     title = os.path.splitext(file_name)[0]  # 확장자를 제거한 파일 이름을 title로 사용
 
@@ -127,14 +141,6 @@ def lambda_handler(event, context):
     category = event.get('category', "22")
     keywords = event.get('keywords', "")
     privacy_status = event.get('privacyStatus', "private")
-
-    if not s3_bucket or not s3_key:
-        raise ValueError("S3 bucket and key are required in the event data.")
-
-    s3 = boto3.client('s3')
-    with NamedTemporaryFile(delete=False) as temp_file:
-        s3.download_fileobj(s3_bucket, s3_key, temp_file)
-        temp_file_path = temp_file.name
 
     youtube = get_authenticated_service()
 
