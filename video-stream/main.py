@@ -3,6 +3,7 @@ Read stream, send from EC2 to SQS.
 """
 import argparse
 import logging
+import os
 import time
 
 import streamlink
@@ -19,7 +20,7 @@ logging.basicConfig(
 )
 
 # Kafka config
-broker_public_ip = None
+broker_public_ip = os.getenv('BROKER_IP', 'localhost')
 conf = {
     'bootstrap.servers': f'{broker_public_ip}:9092',
     'security.protocol': 'PLAINTEXT'
