@@ -1,5 +1,4 @@
 import influxdb_client
-from datetime import datetime, timezone
 from confluent_kafka import Consumer
 from influxdb_client import Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -59,6 +58,7 @@ try:
         # influxDB에 데이터 넣기
         write_api.write(bucket=bucket, org=org, record=point)
 
+        print(kafka_timestamp)
 
 except KeyboardInterrupt:
     pass

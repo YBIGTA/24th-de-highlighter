@@ -1,10 +1,6 @@
 import influxdb_client
 import os
 from dotenv import load_dotenv
-import pandas as pd
-from influxdb_client import Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS  # Import SYNCHRONOUS
-import csv
 
 load_dotenv()
 
@@ -13,7 +9,6 @@ influxdb_token = os.getenv('INFLUXDB_TOKEN')
 influxdb_url = os.getenv('INFLUXDB_URL')
 influxdb_org = os.getenv('INFLUXDB_ORG')
 bucket = os.getenv('INFLUXDB_BUCKET')
-csv.field_size_limit(10000000)
 
 # 클라이언트 생성
 client = influxdb_client.InfluxDBClient(url=influxdb_url, token=influxdb_token, org=influxdb_org)
@@ -31,7 +26,7 @@ end_time = "now()"  # Current time
 query = f'''
 from(bucket: "{bucket}")
   |> range(start: {start_time})
-  |> filter(fn: (r) => r["_measurement"] == "kafka_data_13")
+  |> filter(fn: (r) => r["_measurement"] == "video_text")
   |> filter(fn: (r) => uint(v: r["_time"]) >= 1724061418579000000 and uint(v: r["_time"]) < 1724061418580000000)
   |> sort(columns: ["_time"], desc: false)
 '''
@@ -42,4 +37,4 @@ tables = query_api.query(query)
 for table in tables:
     for record in table.records: 
         # print({"time": record.get_time(), "text": record.get_value()})
-        print({"time": record.get_value()})
+        print({"value": record.get_value()})
