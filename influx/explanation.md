@@ -1,3 +1,12 @@
+# InfluxDB vs RDB
+| Database | Databse |
+| --- | --- |
+| Table | Measurement |
+| Column | Key |
+| Indexed Column | Tag Key (String Only) |
+| Unindexed Column | Field Key |
+| Row | Point |
+
 # Dependency
 
 `pip3 install influxdb-client`
@@ -22,15 +31,6 @@ client = influxdb_client.InfluxDBClient(url=url, token=token, org=org)
 
 # Write Data
 - InfluxDB에서는 Write할 API와 Read할 API를 각각 생성해줘야된다.
-
-## InfluxDB vs RDB
-| Database | Databse |
-| --- | --- |
-| Table | Measurement |
-| Column | Key |
-| Indexed Column | Tag Key (String Only) |
-| Unindexed Column | Field Key |
-| Row | Point |
 
 예시는 아래와 같다:
 ```python
