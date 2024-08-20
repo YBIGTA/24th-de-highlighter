@@ -1,6 +1,7 @@
 import influxdb_client
 import os
 from dotenv import load_dotenv
+import csv
 
 load_dotenv()
 
@@ -9,6 +10,7 @@ influxdb_token = os.getenv('INFLUXDB_TOKEN')
 influxdb_url = os.getenv('INFLUXDB_URL')
 influxdb_org = os.getenv('INFLUXDB_ORG')
 bucket = os.getenv('INFLUXDB_BUCKET')
+csv.field_size_limit(1048576)
 
 # 클라이언트 생성
 client = influxdb_client.InfluxDBClient(url=influxdb_url, token=influxdb_token, org=influxdb_org)
