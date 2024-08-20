@@ -4,6 +4,7 @@ add-java-docker
 youtube-live/__pychcache__/*
 .idea/*
 .vscode/*
+.DS_Store
 
 # Terraform
 .terraform*

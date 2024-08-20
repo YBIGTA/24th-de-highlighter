@@ -1,11 +1,8 @@
 import influxdb_client
 import os
-import pandas as pd
-from datetime import datetime, timezone, timedelta
 from influxdb_client import Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from dotenv import load_dotenv
-import time
 load_dotenv()
 
 # InfluxDB 환경 세팅
