@@ -25,7 +25,7 @@ After extracting the highlights, ***`Highlighter`*** can automatically upload th
 
 <img src="assets/overview.svg" alt="overview" />
 
-## Team 
+<!-- ## Team 
 
 [**@sunghj1118**](https://github.com/sunghj1118) /
 [**@allofjw**](https://github.com/allofjw) /
@@ -33,4 +33,10 @@ After extracting the highlights, ***`Highlighter`*** can automatically upload th
 [**@hengyinayo**](https://github.com/hengyinayo) /
 [**@RJihyeon**](https://github.com/Rjihyeon) /
 [**@younyoungieo**](https://github.com/younyoungieo) / 
-[**@yxxjimin**](https://github.com/yxxjimin)
+[**@yxxjimin**](https://github.com/yxxjimin) -->
+
+## Contributors
+
+<a href="https://github.com/YBIGTA/24th-de-highlighter/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=YBIGTA/24th-de-highlighter" />
+</a>
