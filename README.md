@@ -25,15 +25,7 @@ After extracting the highlights, ***`Highlighter`*** can automatically upload th
 
 <img src="assets/overview.svg" alt="overview" />
 
-<!-- ## Team 
-
-[**@sunghj1118**](https://github.com/sunghj1118) /
-[**@allofjw**](https://github.com/allofjw) /
-[**@C-limlim**](https://github.com/C-limlim) /
-[**@hengyinayo**](https://github.com/hengyinayo) /
-[**@RJihyeon**](https://github.com/Rjihyeon) /
-[**@younyoungieo**](https://github.com/younyoungieo) / 
-[**@yxxjimin**](https://github.com/yxxjimin) -->
+For more detailed documentation, including advanced usage, configuration examples, and troubleshooting tips, please refer to the [GitHub Wiki](https://github.com/YBIGTA/24th-de-highlighter/wiki) for this project.
 
 ## Contributors
 
