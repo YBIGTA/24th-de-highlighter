@@ -23,7 +23,7 @@ After extracting the highlights, ***`Highlighter`*** can automatically upload th
 
 ## Overview
 
-<img src="assets/overview.svg" alt="overview" />
+![arch](assets/architecture.png)
 
 For more detailed documentation, including advanced usage, configuration examples, and troubleshooting tips, please refer to the [GitHub Wiki](https://github.com/YBIGTA/24th-de-highlighter/wiki) for this project.
 
