@@ -5,6 +5,7 @@ youtube-live/__pychcache__/*
 .idea/*
 .vscode/*
 .DS_Store
+videos/*
 
 # Terraform
 .terraform*
